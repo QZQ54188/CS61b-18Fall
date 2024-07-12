@@ -2,10 +2,14 @@
  *  @author YOUR NAME HERE
  */
 public class LeapYear {
-
+    //qzq54188
     /** Calls isLeapYear to print correct statement.
      *  @param  year to be analyzed
      */
+    
+    public static void test(){
+        System.out.println("hello");
+    }
 
     public static boolean isLeapYear(int year){
         return((year%4==0 && year%100!=0)||year%400==0);
@@ -18,7 +22,7 @@ public class LeapYear {
             System.out.printf("%d is not a leap year.\n", year);
         }
     }
-
+    //5818877919
     /** Must be provided an integer as a command line argument ARGS. */
     public static void main(String[] args) {
         if (args.length < 1) {
