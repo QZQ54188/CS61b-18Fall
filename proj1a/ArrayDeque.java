@@ -1,12 +1,12 @@
-public class ArrayDeque<Type> {
+public class ArrayDeque<T> {
     private int size;
     private int first;
     private int last;
-    private Type[] arr;
+    private T[] arr;
     private int capacity;
 
     public ArrayDeque() {
-        arr = (Type[]) new Object[8];
+        arr = (T[]) new Object[8];
         this.capacity = arr.length;
         first = 0;
         last = 1;
@@ -23,7 +23,7 @@ public class ArrayDeque<Type> {
     }
 
     public void resizing(int capacity) {
-        Type[] Newarr = (Type[]) new Object[capacity];
+        T[] Newarr = (T[]) new Object[capacity];
         for (int i = 1; i <= size; i++) {
             Newarr[i] = arr[(++first) % this.capacity];
         }
@@ -34,7 +34,7 @@ public class ArrayDeque<Type> {
         arr = Newarr;
     }
 
-    public void addFirst(Type item) {
+    public void addFirst(T item) {
         if (size == this.capacity) {
             resizing(capacity * 2);
         }
@@ -44,7 +44,7 @@ public class ArrayDeque<Type> {
         first = first == 0 ? capacity - 1 : first - 1;
     }
 
-    public void addLast(Type item) {
+    public void addLast(T item) {
         if (size == this.capacity) {
             resizing(capacity * 2);
         }
@@ -61,19 +61,19 @@ public class ArrayDeque<Type> {
         System.out.println(arr[last - 1]);
     }
 
-    public Type get(int index) {
+    public T get(int index) {
         if (index >= size) {
             return null;
         }
-        return arr[(first + 1 + index) % capacity];
+        return arr[(first + 1 + index) % this.capacity];
     }
 
-    public Type removeFirst() {
+    public T removeFirst() {
         if (size == 0) {
             return null;
         }
         first = (first++) % capacity;
-        Type temp = arr[first];
+        T temp = arr[first];
         arr[first] = null;
         size--;
         if (capacity >= 16 && size < capacity / 4) {
@@ -82,12 +82,12 @@ public class ArrayDeque<Type> {
         return temp;
     }
 
-    public Type removeLast() {
+    public T removeLast() {
         if (size == 0) {
             return null;
         }
-        last = last == 0 ? capacity - 1 : last--;
-        Type temp = arr[last];
+        last = last == 0 ? capacity - 1 : last - 1;
+        T temp = arr[last];
         arr[last] = null;
         size--;
         if (capacity >= 16 && size < capacity / 4) {

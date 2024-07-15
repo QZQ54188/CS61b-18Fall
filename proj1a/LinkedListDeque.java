@@ -1,12 +1,12 @@
-public class LinkedListDeque<Type> {
+public class LinkedListDeque<T> {
     private int size;
 
     private class Node {
-        private Type elem;
+        private T elem;
         private Node pre;
         private Node next;
 
-        public Node(Type _elem, Node _pre, Node _next) {
+        public Node(T _elem, Node _pre, Node _next) {
             elem = _elem;
             pre = _pre;
             next = _next;
@@ -30,7 +30,7 @@ public class LinkedListDeque<Type> {
         return size == 0 ? true : false;
     }
 
-    public void addFirst(Type item) {
+    public void addFirst(T item) {
         if (sentinel.next == null) {
             sentinel.next = new Node(item, sentinel, sentinel);
             sentinel.pre = sentinel.next;
@@ -42,7 +42,7 @@ public class LinkedListDeque<Type> {
         size++;
     }
 
-    public void addLast(Type item) {
+    public void addLast(T item) {
         if (sentinel.next == null) {
             sentinel.next = new Node(item, sentinel, sentinel);
             sentinel.pre = sentinel.next;
@@ -62,11 +62,11 @@ public class LinkedListDeque<Type> {
         }
     }
 
-    public Type removeFirst() {
-        if (sentinel.next == null) {
+    public T removeFirst() {
+        if (size == 0) {
             return null;
         }
-        Type res = sentinel.next.elem;
+        T res = sentinel.next.elem;
         Node temp = sentinel.next;
         sentinel.next = sentinel.next.next;
         sentinel.next.pre = sentinel;
@@ -76,11 +76,11 @@ public class LinkedListDeque<Type> {
         return res;
     }
 
-    public Type removeLast() {
-        if (sentinel.pre == null) {
+    public T removeLast() {
+        if (size == 0) {
             return null;
         }
-        Type res = sentinel.pre.elem;
+        T res = sentinel.pre.elem;
         Node temp = sentinel.pre;
         sentinel.pre = sentinel.pre.pre;
         sentinel.pre.next = sentinel;
@@ -90,25 +90,25 @@ public class LinkedListDeque<Type> {
         return res;
     }
 
-    public Type get(int index) {
+    public T get(int index) {
         if (index >= size) {
             return null;
         }
         Node ptr = sentinel.next;
-        for (int i = 0; i <= index; i++) {
+        for (int i = 0; i <= index - 1; i++) {
             ptr = ptr.next;
         }
         return ptr.elem;
     }
 
-    public Type getHelper(int index, Node ptr) {
+    public T getHelper(int index, Node ptr) {
         if (index == 0) {
             return ptr.elem;
         }
         return getHelper(index - 1, ptr.next);
     }
 
-    public Type getRecursive(int index) {
+    public T getRecursive(int index) {
         if (index >= size) {
             return null;
         }
