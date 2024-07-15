@@ -101,7 +101,7 @@ public class LinkedListDeque<T> {
         return ptr.elem;
     }
 
-    public T getHelper(int index, Node ptr) {
+    private T getHelper(int index, Node ptr) {
         if (index == 0) {
             return ptr.elem;
         }

@@ -22,7 +22,7 @@ public class ArrayDeque<T> {
         return size == 0;
     }
 
-    public void resizing(int capacity) {
+    private void resizing(int capacity) {
         T[] Newarr = (T[]) new Object[capacity];
         for (int i = 1; i <= size; i++) {
             Newarr[i] = arr[(++first) % this.capacity];
@@ -72,7 +72,7 @@ public class ArrayDeque<T> {
         if (size == 0) {
             return null;
         }
-        first = (first++) % capacity;
+        first = (first + 1) % capacity;
         T temp = arr[first];
         arr[first] = null;
         size--;
