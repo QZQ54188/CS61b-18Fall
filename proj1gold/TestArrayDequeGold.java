@@ -24,14 +24,14 @@ public class TestArrayDequeGold {
                 stuArrDeque.addLast(temp);
                 solArrDeque.addLast(temp);
                 operation += "addLast(" + temp + ")" + "\n";
-                assertEquals(operation, stuArrDeque.get(stuArrDeque.size() - 1),
-                        solArrDeque.get(solArrDeque.size() - 1));
+                assertEquals(operation, solArrDeque.get(solArrDeque.size() - 1),
+                        stuArrDeque.get(stuArrDeque.size() - 1));
             } else if (0.5 <= rng && 0.75 > rng && solArrDeque.size() != 0) {
                 operation += "removeFirst()" + "\n";
-                assertEquals(operation, solArrDeque.removeFirst(), solArrDeque.removeFirst());
+                assertEquals(operation, solArrDeque.removeFirst(), stuArrDeque.removeFirst());
             } else if (0.75 <= rng && solArrDeque.size() != 0) {
                 operation += "removeLast()" + "\n";
-                assertEquals(operation, stuArrDeque.removeLast(), solArrDeque.removeLast());
+                assertEquals(operation, solArrDeque.removeLast(), stuArrDeque.removeLast());
             }
         }
 
