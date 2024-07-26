@@ -2,6 +2,7 @@ package hw3.hash;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -18,9 +19,11 @@ public class TestComplexOomage {
         }
     }
 
-    /* This should pass if your OomageTestUtility.haveNiceHashCodeSpread
-       is correct. This is true even though our given ComplexOomage class
-       has a flawed hashCode. */
+    /*
+     * This should pass if your OomageTestUtility.haveNiceHashCodeSpread
+     * is correct. This is true even though our given ComplexOomage class
+     * has a flawed hashCode.
+     */
     @Test
     public void testRandomOomagesHashCodeSpread() {
         List<Oomage> oomages = new ArrayList<>();
@@ -33,18 +36,31 @@ public class TestComplexOomage {
         assertTrue(OomageTestUtility.haveNiceHashCodeSpread(oomages, 10));
     }
 
-    /* TODO: Create a list of Complex Oomages called deadlyList
+    /*
+     * TODO: Create a list of Complex Oomages called deadlyList
      * that shows the flaw in the hashCode function.
      */
-    /*
+
     @Test
     public void testWithDeadlyParams() {
         List<Oomage> deadlyList = new ArrayList<>();
 
         // Your code here.
-
+        List<Integer> params = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++) {
+            params.add(255);
+            ComplexOomage deadOomage = new ComplexOomage(params);
+            deadlyList.add(deadOomage);
+        }
+        // 检测hash碰撞,如果有两个hash值相同就测试失败
+        for (int i = 0; i < 9; i++) {
+            for (int j = i + 1; j < 10; j++) {
+                assertFalse(deadlyList.get(i).hashCode() == deadlyList.get(j).hashCode());
+            }
+        }
+        // 确保插入的随机性
         assertTrue(OomageTestUtility.haveNiceHashCodeSpread(deadlyList, 10));
-    } */
+    }
 
     /** Calls tests for SimpleOomage. */
     public static void main(String[] args) {
