@@ -77,10 +77,10 @@ public class Solver {
                 }
                 return cur.cost;
             }
-
             for (WorldState neighbor : cur.worlds.neighbors()) {
                 // 确保不会造成循环添加
-                if (cur.parentNode == null || !cur.parentNode.worlds.equals(neighbor)) {
+                if (cur.parentNode == null ||
+                        !cur.parentNode.worlds.equals(neighbor)) {
                     Node p = new Node(neighbor, cur, cur.cost + 1); // 修改这里，使用cur.cost而不是costs
                     pq.insert(p);
                 }
