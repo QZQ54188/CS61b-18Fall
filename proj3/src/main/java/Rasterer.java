@@ -9,6 +9,19 @@ import java.util.Map;
  */
 public class Rasterer {
 
+    private static double[] LonDPP = new double[8];
+    //从MapSever中获取的最初地图的经纬度边界
+    private static final double INITLRLON = MapServer.ROOT_LRLON,
+    INITULLON = MapServer.ROOT_ULLON,INITLRLAT = MapServer.ROOT_LRLAT,
+    INITULLAT = MapServer.ROOT_ULLAT;
+
+    //静态变量的初始化
+    static{
+        LonDPP[0] = (INITLRLON - INITULLON) / MapServer.TILE_SIZE;
+        for(int i = 1; i < 8; i++){
+            LonDPP[i] = LonDPP[i - 1] / 2;
+        }
+    }
     public Rasterer() {
         // YOUR CODE HERE
     }
@@ -42,11 +55,104 @@ public class Rasterer {
      *                    forget to set this to true on success! <br>
      */
     public Map<String, Object> getMapRaster(Map<String, Double> params) {
-        // System.out.println(params);
+        //System.out.println(params);
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented getMapRaster, nothing is displayed in "
-                           + "your browser.");
-        return results;
+//        System.out.println("Since you haven't implemented getMapRaster, nothing is displayed in "
+//                           + "your browser.");
+        //获取服务器中的地图相关参数
+        double ullon = params.get("ullon");
+        double ullat = params.get("ullat");
+        double lrlon = params.get("lrlon");
+        double lrlat = params.get("lrlat");
+
+        //判断参数是否合法,不合法的话设置为0并且返回
+        if(lrlat >= INITULLAT || lrlon <= INITULLON ||ullat <= INITLRLAT ||
+            ullon >= INITLRLON || ullon >= lrlon || ullat <= lrlat){
+            results.put("query_syccess", false);
+            results.put("depth", 0);
+            //表示没有要渲染的瓦片
+            results.put("render_grid", null);
+            results.put("raster_ul_lon", 0);
+            results.put("raster_ul_lat", 0);
+            results.put("raster_lr_lon", 0);
+            results.put("raster_lr_lat", 0);
+            return results;
+        }
+
+        //根据参数得到缩放深度
+        double aimLonDPP = (lrlon - ullon) / params.get("w");
+        int depth = getDepth(aimLonDPP);
+        results.put("depth", depth);
+        //maxLevel表示当前画面由多少小地图拼接而成
+        double maxLevel = Math.pow(2, depth);
+        //计算出每个小地图之间的间距，便于遍历小地图
+        double xDiff = (INITLRLON - INITULLON) / maxLevel;
+        double yDiff = (INITLRLAT - INITULLAT) / maxLevel;
+
+        //遍历小地图，得出组成目标区域的地图范围，并且调整索引后将其计入答案
+        int xLeft = 0, xRight = 0, yLeft = 0, yRight = 0;
+        for(double x = INITULLON; x <= INITLRLON; x+=xDiff){
+            if(x <= ullon){
+                xLeft++;
+            }
+            if(xRight < maxLevel && x <= lrlon){
+                xRight++;
+            }
+        }
+        for(double y = INITULLAT; y >= INITLRLAT; y+=yDiff){
+            if(y >= ullat){
+                yLeft++;
+            }
+            if(yRight < maxLevel && y >= lrlat){
+                yRight++;
+            }
+        }
+
+        //调整索引，确保索引位于正确的范围
+        if(xLeft != 0){
+            xLeft--;
+        }
+        if(xRight != 0){
+            xRight--;
+        }
+        if(yLeft != 0){
+            yLeft--;
+        }
+        if(yRight != 0){
+            yRight--;
+        }
+
+        String[][] files = new String[yRight - yLeft + 1][xRight - xLeft + 1];
+        for(int y = yLeft; y <= yRight; y++){
+            for(int x = xLeft; x <= xRight; x++){
+                files[y - yLeft][x - xLeft] = "d" + depth + "_x" + x + "_y" + y + ".png";
+            }
+        }
+
+        //根据缩放深度的到当前的经纬度
+        results.put("render_grid", files);
+        results.put("raster_ul_lon", INITULLON + xLeft * xDiff);
+        results.put("raster_ul_lat", INITULLAT + yLeft * yDiff);
+        results.put("raster_lr_lon", INITULLON + (xRight + 1) * xDiff);
+        results.put("raster_lr_lat", INITULLAT + (yRight + 1) * yDiff);
+        results.put("query_success", true);
+
+        //System.out.println(results);
+
+       return results;
     }
+
+    //得到当前LonDPP对应的图像深度（也可以说原图片缩放程度）
+    private int getDepth(double aimLonDPP){
+        int depth = 0;
+        while(aimLonDPP < LonDPP[depth]){
+            depth++;
+            if(depth == LonDPP.length - 1){
+                break;
+            }
+        }
+        return depth;
+    }
+
 
 }

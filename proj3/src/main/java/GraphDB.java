@@ -1,12 +1,23 @@
-import org.xml.sax.SAXException;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
-import java.util.ArrayList;
+
+import org.xml.sax.SAXException;
 
 /**
  * Graph for storing all of the intersection (vertex) and road (edge) information.
@@ -18,12 +29,22 @@ import java.util.ArrayList;
  * @author Alan Yao, Josh Hug
  */
 public class GraphDB {
-    /** Your instance variables for storing the graph. You should consider
-     * creating helper classes, e.g. Node, Edge, etc. */
+    /**
+     * Your instance variables for storing the graph. You should consider creating
+     * helper classes, e.g. Node, Edge, etc.
+     */
+
+    private final Map<Long, Node> nodes = new LinkedHashMap<>();
+    private final Map<Long, Way> ways = new LinkedHashMap<>();
+    private final Trie trieForNodeName = new Trie();
+    private final Map<Long, NameNode> nameNodes = new LinkedHashMap<>();
+    private final Map<String, List<Long>> locations = new LinkedHashMap<>();
+    private final KdTree kdTreeForNearestNeighbor = new KdTree();
 
     /**
      * Example constructor shows how to create and start an XML parser.
      * You do not need to modify this constructor, but you're welcome to do so.
+     *
      * @param dbPath Path to the XML file to be parsed.
      */
     public GraphDB(String dbPath) {
@@ -40,10 +61,15 @@ public class GraphDB {
             e.printStackTrace();
         }
         clean();
+
+        for (long node : nodes.keySet()) {
+            addToKdTree(nodes.get(node));
+        }
     }
 
     /**
      * Helper to process strings into their "cleaned" form, ignoring punctuation and capitalization.
+     *
      * @param s Input string.
      * @return Cleaned string.
      */
@@ -52,36 +78,45 @@ public class GraphDB {
     }
 
     /**
-     *  Remove nodes with no connections from the graph.
-     *  While this does not guarantee that any two nodes in the remaining graph are connected,
-     *  we can reasonably assume this since typically roads are connected.
+     * Remove nodes with no connections from the graph.
+     * While this does not guarantee that any two nodes in the remaining graph are connected,
+     * we can reasonably assume this since typically roads are connected.
      */
     private void clean() {
-        // TODO: Your code here.
+        //use iterator
+        Iterator<Long> it = nodes.keySet().iterator();
+        while (it.hasNext()) {
+            Long node = it.next();
+            if (nodes.get(node).adjs.isEmpty()) {
+                it.remove();
+            }
+        }
     }
 
     /**
      * Returns an iterable of all vertex IDs in the graph.
+     *
      * @return An iterable of id's of all vertices in the graph.
      */
     Iterable<Long> vertices() {
-        //YOUR CODE HERE, this currently returns only an empty list.
-        return new ArrayList<Long>();
+        return nodes.keySet();
     }
 
     /**
      * Returns ids of all vertices adjacent to v.
+     *
      * @param v The id of the vertex we are looking adjacent to.
      * @return An iterable of the ids of the neighbors of v.
      */
     Iterable<Long> adjacent(long v) {
-        return null;
+        return nodes.get(v).adjs;
     }
 
     /**
      * Returns the great-circle distance between vertices v and w in miles.
      * Assumes the lon/lat methods are implemented properly.
      * <a href="https://www.movable-type.co.uk/scripts/latlong.html">Source</a>.
+     *
      * @param v The id of the first vertex.
      * @param w The id of the second vertex.
      * @return The great-circle distance between the two locations from the graph.
@@ -109,6 +144,7 @@ public class GraphDB {
      * end point.
      * Assumes the lon/lat methods are implemented properly.
      * <a href="https://www.movable-type.co.uk/scripts/latlong.html">Source</a>.
+     *
      * @param v The id of the first vertex.
      * @param w The id of the second vertex.
      * @return The initial bearing between the vertices.
@@ -131,29 +167,210 @@ public class GraphDB {
 
     /**
      * Returns the vertex closest to the given longitude and latitude.
+     *
      * @param lon The target longitude.
      * @param lat The target latitude.
      * @return The id of the node in the graph closest to the target.
      */
     long closest(double lon, double lat) {
-        return 0;
+        return kdTreeForNearestNeighbor.nearest(lon, lat);
     }
 
     /**
      * Gets the longitude of a vertex.
+     *
      * @param v The id of the vertex.
      * @return The longitude of the vertex.
      */
     double lon(long v) {
-        return 0;
+        return nodes.get(v).lon;
     }
 
     /**
      * Gets the latitude of a vertex.
+     *
      * @param v The id of the vertex.
      * @return The latitude of the vertex.
      */
     double lat(long v) {
-        return 0;
+        return nodes.get(v).lat;
+    }
+
+    /**
+     * Add a node to the graph.
+     *
+     * @param n node
+     */
+    void addNode(Node n) {
+        nodes.put(n.id, n);
+    }
+
+    /**
+     * Add a way to the graph.
+     *
+     * @param w way
+     */
+    void addWay(Way w) {
+        ways.put(w.id, w);
+    }
+
+    void addAdj(Long node1, Long node2) {
+        nodes.get(node1).adjs.add(node2);
+    }
+
+    public void addToKdTree(GraphDB.Node n) {
+        kdTreeForNearestNeighbor.insert(n);
+    }
+
+    public void addCleanNameToTrie(String cleanName, String name) {
+        trieForNodeName.add(cleanName, name);
+    }
+
+    public List<String> collectFromTrie(String prefix) {
+        Trie.TrieNode prefixEnd = trieForNodeName.findNode(prefix);
+        List<String> res = new ArrayList<>();
+        if (prefixEnd == null) {
+            return res;
+        }
+        if (prefixEnd.isWord()) {
+            res.addAll(prefixEnd.getNames());
+        }
+        for (char c : prefixEnd.getChildren().keySet()) {
+            colHelper(prefix + c, res, prefixEnd.getChildren().get(c));
+        }
+        return res;
+    }
+
+    private void colHelper(String s, List<String> res, Trie.TrieNode node) {
+        if (node.isWord()) {
+            res.addAll(node.getNames());
+        }
+        for (char c : node.getChildren().keySet()) {
+            colHelper(s + c, res, node.getChildren().get(c));
+        }
+    }
+
+    public void addLocation(String name, long id) {
+        if (locations.containsKey(name)) {
+            locations.get(name).add(id);
+        } else {
+            locations.put(name, new ArrayList<>(Arrays.asList(id)));
+        }
+    }
+
+    public List<String> getLocationsByPrefix(String prefix) {
+        return collectFromTrie(prefix);
+    }
+
+    public List<Map<String, Object>> getLocations(String locationName) {
+        List<Map<String, Object>> res = new LinkedList<>();
+        if (!locations.containsKey(locationName)) {
+            return res;
+        }
+        for (long id : locations.get(locationName)) {
+            res.add(getNameNodeAsMap(id));
+        }
+        return res;
+    }
+
+    static class Node {
+        long id;
+        double lon;
+        double lat;
+        // Map<String, String> extraInfo;
+        Set<Long> adjs;
+        double priority = 0;
+        double distTo = 0;
+        List<Long> wayIds;
+
+        Node(long id, double lon, double lat) {
+            this.id = id;
+            this.lon = lon;
+            this.lat = lat;
+            // this.extraInfo = new HashMap<>();
+            this.adjs = new LinkedHashSet<>();
+            this.wayIds = new ArrayList<>();
+        }
+    }
+
+    public double getDistTo(long v) {
+        return nodes.get(v).distTo;
+    }
+
+    public void changeDistTo(long v, double newDistTo) {
+        nodes.get(v).distTo = newDistTo;
+    }
+
+    public void changePriority(long v, double newPriority) {
+        nodes.get(v).priority = newPriority;
+    }
+
+    class NodeComparator implements Comparator<Long> {
+        @Override
+        public int compare(Long v, Long w) {
+            return Double.compare(nodes.get(v).priority, nodes.get(w).priority);
+        }
+    }
+
+    public Comparator<Long> getNodeComparator() {
+        return new NodeComparator();
+    }
+
+    public Node getNode(long nodeId) {
+        return nodes.get(nodeId);
+    }
+
+    static class Way {
+        long id;
+        String maxSpeed;
+        String name;
+        String highway;
+        List<Long> locations;
+
+        Way(long id) {
+            this.id = id;
+            this.locations = new ArrayList<>();
+        }
+
+    }
+
+    public List<Long> getWays(long nodeId) {
+        return nodes.get(nodeId).wayIds;
+    }
+
+    public String getWayName(long wayId) {
+        return ways.get(wayId).name;
+    }
+
+    static class NameNode {
+        long id;
+        double lon;
+        double lat;
+        String name;
+
+        public NameNode(long id, double lon, double lat, String name) {
+            this.id = id;
+            this.lon = lon;
+            this.lat = lat;
+            this.name = name;
+        }
+    }
+
+    public void addNameNode(NameNode n) {
+        nameNodes.put(n.id, n);
+    }
+
+    public String getNodeName(long id) {
+        return nameNodes.get(id).name;
+    }
+
+    public Map<String, Object> getNameNodeAsMap(long id) {
+        NameNode n = nameNodes.get(id);
+        Map<String, Object> res = new HashMap<>();
+        res.put("id", n.id);
+        res.put("lat", n.lat);
+        res.put("lon", n.lon);
+        res.put("name", n.name);
+        return res;
     }
 }
