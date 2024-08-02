@@ -40,27 +40,27 @@ public class RadixSort {
      * @param index  The position to sort the Strings on.
      */
     private static void sortHelperLSD(String[] asciis, int index) {
-        // Optional LSD helper method for required LSD radix sort
         int R = 256;
-        int[] counts = new int[R]; // 计数数组
-
-        // 计算每个字符出现的次数
-        for (String s : asciis) {
-            int ch = charAtOrMinChar(index, s);
-            counts[ch]++;
+        int[] counts = new int[R + 1];
+        for (String item : asciis) {
+            int c = charAtOrMinChar(index, item);
+            counts[c]++;
         }
 
-        // 计算每个字符在排序后数组中的起始位置
-        for (int i = 1; i < R; i++) {
-            counts[i] += counts[i - 1];
+        int[] starts = new int[R + 1];
+        int pos = 0;
+        for (int i = 0; i < R + 1; i++) {
+            starts[i] = pos;
+            pos += counts[i];
         }
 
-        // 使用辅助数组进行排序
         String[] sorted = new String[asciis.length];
-        for (int i = asciis.length - 1; i >= 0; i--) { // 从后向前遍历以保持稳定性
-            String s = asciis[i];
-            int ch = charAtOrMinChar(index, s);
-            sorted[--counts[ch]] = s;
+        for (int i = 0; i < asciis.length; i++) {
+            String item = asciis[i];
+            int c = charAtOrMinChar(index, item);
+            int place = starts[c];
+            sorted[place] = item;
+            starts[c]++;
         }
 
         System.arraycopy(sorted, 0, asciis, 0, asciis.length);
@@ -69,7 +69,7 @@ public class RadixSort {
     // 获取对应字符串位数的字符
     private static int charAtOrMinChar(int index, String s) {
         if (index >= 0 && index < s.length()) {
-            return s.charAt(index);
+            return s.charAt(index) + 1;
         } else {
             return 0;
         }
