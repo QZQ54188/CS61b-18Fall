@@ -69,7 +69,7 @@ public class RadixSort {
     // 获取对应字符串位数的字符
     private static int charAtOrMinChar(int index, String s) {
         if (index >= 0 && index < s.length()) {
-            return s.charAt(index) + 1;
+            return s.charAt(index);
         } else {
             return 0;
         }
