@@ -56,6 +56,7 @@ public class Router {
             }
         }
 
+        //找到最优路径之后进行回溯
         List<Long> res = new LinkedList<>();
         res.add(destNode);
         while(destNode != stNode){
@@ -66,6 +67,7 @@ public class Router {
             destNode = edgeTo.get(destNode);
         }
 
+        //将所有节点的优先级设置为初始状态，便于下一次搜索
         for(Long node : g.vertices()){
             g.changePriority(node, 0);
         }
@@ -93,11 +95,13 @@ public class Router {
     public static List<NavigationDirection> routeDirections(GraphDB g, List<Long> route) {
         List<NavigationDirection> res = new ArrayList<>();
         NavigationDirection cur = new NavigationDirection();
+        //得到初始状态
         cur.direction = NavigationDirection.START;
         cur.way = getWayName(g, route.get(0), route.get(1));
         cur.distance += g.distance(route.get(0), route.get(1));
 
         for(int i = 1, j = 2; j < route.size(); i++, j++){
+            //如果道路发生变化，就根据变化确定新的路线
             if(!getWayName(g, route.get(i), route.get(j)).equals(cur.way)){
                 res.add(cur);
                 cur = new NavigationDirection();
@@ -108,12 +112,14 @@ public class Router {
                 cur.distance += g.distance(route.get(i), route.get(j));
                 continue;
             }
+            //如果道路没有变化，累积当前段的距离到cur.distance
             cur.distance += g.distance(route.get(i), route.get(j));
         }
         res.add(cur);
         return res;
     }
 
+    //获取两个节点之间的道路名称
     private static String getWayName(GraphDB g, long node1, long node2){
         String name = "";
         List<Long> way1 = g.getWays(node1);

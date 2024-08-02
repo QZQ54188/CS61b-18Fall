@@ -9,6 +9,7 @@ import java.util.Map;
  */
 public class Rasterer {
 
+    //LonDpp数组表示地图缩放深度
     private static double[] LonDPP = new double[8];
     //从MapSever中获取的最初地图的经纬度边界
     private static final double INITLRLON = MapServer.ROOT_LRLON,
@@ -19,6 +20,7 @@ public class Rasterer {
     static{
         LonDPP[0] = (INITLRLON - INITULLON) / MapServer.TILE_SIZE;
         for(int i = 1; i < 8; i++){
+            //每当地图深度加深，LonDPP都要减半
             LonDPP[i] = LonDPP[i - 1] / 2;
         }
     }
@@ -65,9 +67,9 @@ public class Rasterer {
         double lrlon = params.get("lrlon");
         double lrlat = params.get("lrlat");
 
-        //判断参数是否合法,不合法的话设置为0并且返回
-        if(lrlat >= INITULLAT || lrlon <= INITULLON ||ullat <= INITLRLAT ||
-            ullon >= INITLRLON || ullon >= lrlon || ullat <= lrlat){
+        //判断参数是否合法,不合法的话设置为0并且返回.
+        if(lrlat >= INITULLAT || lrlon <= INITULLON || ullat <= INITLRLAT ||
+        ullon >= INITLRLON || ullon >= lrlon || ullat <= lrlat){
             results.put("query_syccess", false);
             results.put("depth", 0);
             //表示没有要渲染的瓦片
@@ -83,13 +85,15 @@ public class Rasterer {
         double aimLonDPP = (lrlon - ullon) / params.get("w");
         int depth = getDepth(aimLonDPP);
         results.put("depth", depth);
-        //maxLevel表示当前画面由多少小地图拼接而成
+
+        //maxLevel表示当前画面x和y方向分别由多少小地图拼接而成
         double maxLevel = Math.pow(2, depth);
         //计算出每个小地图之间的间距，便于遍历小地图
         double xDiff = (INITLRLON - INITULLON) / maxLevel;
         double yDiff = (INITLRLAT - INITULLAT) / maxLevel;
 
-        //遍历小地图，得出组成目标区域的地图范围，并且调整索引后将其计入答案
+        //从边界开始遍历，找到目标区域所对应的地图下标
+        //xLeft表示目标区域对应最左边图片下标，xRight表示对应目标区域最右边图片下标
         int xLeft = 0, xRight = 0, yLeft = 0, yRight = 0;
         for(double x = INITULLON; x <= INITLRLON; x+=xDiff){
             if(x <= ullon){
@@ -122,6 +126,7 @@ public class Rasterer {
             yRight--;
         }
 
+        //按照要求，将目标图片储存到String[][]数组中
         String[][] files = new String[yRight - yLeft + 1][xRight - xLeft + 1];
         for(int y = yLeft; y <= yRight; y++){
             for(int x = xLeft; x <= xRight; x++){
@@ -153,6 +158,5 @@ public class Rasterer {
         }
         return depth;
     }
-
 
 }

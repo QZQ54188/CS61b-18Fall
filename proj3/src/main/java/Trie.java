@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 public class Trie {
+    //前缀树的节点
     static class TrieNode {
         private Map<Character, TrieNode> children;
+        //用于储存当前前缀对应的名称链表，一个key可能有多个name
         private List<String> names;
+        //表示当前节点是否是一个完整单词的结尾
         private boolean isWord;
 
         public TrieNode() {

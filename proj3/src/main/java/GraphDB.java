@@ -34,10 +34,11 @@ public class GraphDB {
      * helper classes, e.g. Node, Edge, etc.
      */
 
+    //nodes储存路口的信息，ways储存道路的信息，nameNodes储存具有名称的节点的信息
     private final Map<Long, Node> nodes = new LinkedHashMap<>();
     private final Map<Long, Way> ways = new LinkedHashMap<>();
-    private final Trie trieForNodeName = new Trie();
     private final Map<Long, NameNode> nameNodes = new LinkedHashMap<>();
+    private final Trie trieForNodeName = new Trie();
     private final Map<String, List<Long>> locations = new LinkedHashMap<>();
     private final KdTree kdTreeForNearestNeighbor = new KdTree();
 
@@ -62,6 +63,7 @@ public class GraphDB {
         }
         clean();
 
+        //在构造函数中将所有的节点加入到kd树中，便于查找最近路线
         for (long node : nodes.keySet()) {
             addToKdTree(nodes.get(node));
         }
@@ -85,7 +87,7 @@ public class GraphDB {
     private void clean() {
         //use iterator
         Iterator<Long> it = nodes.keySet().iterator();
-        while (it.hasNext()) {
+        while(it.hasNext()) {
             Long node = it.next();
             if (nodes.get(node).adjs.isEmpty()) {
                 it.remove();
@@ -173,6 +175,7 @@ public class GraphDB {
      * @return The id of the node in the graph closest to the target.
      */
     long closest(double lon, double lat) {
+        //使用kdTree获取距离（lon，lat）最近的node
         return kdTreeForNearestNeighbor.nearest(lon, lat);
     }
 
@@ -222,19 +225,23 @@ public class GraphDB {
         kdTreeForNearestNeighbor.insert(n);
     }
 
+    //将节点的标准化名称和原始名称添加到前缀树中，可以实现快速的名称查找和自动补齐功能
     public void addCleanNameToTrie(String cleanName, String name) {
         trieForNodeName.add(cleanName, name);
     }
 
+    //在前缀树中找到以prefix为前缀的地名的List
     public List<String> collectFromTrie(String prefix) {
         Trie.TrieNode prefixEnd = trieForNodeName.findNode(prefix);
         List<String> res = new ArrayList<>();
         if (prefixEnd == null) {
             return res;
         }
+        //添加当前节点key对应的name
         if (prefixEnd.isWord()) {
             res.addAll(prefixEnd.getNames());
         }
+        //在res中添加当前节点对应的所有孩子节点key对应的name，实现自动补齐功能
         for (char c : prefixEnd.getChildren().keySet()) {
             colHelper(prefix + c, res, prefixEnd.getChildren().get(c));
         }
@@ -250,6 +257,7 @@ public class GraphDB {
         }
     }
 
+    //支持多个地点同名的情况
     public void addLocation(String name, long id) {
         if (locations.containsKey(name)) {
             locations.get(name).add(id);
@@ -258,36 +266,22 @@ public class GraphDB {
         }
     }
 
-    public List<String> getLocationsByPrefix(String prefix) {
-        return collectFromTrie(prefix);
-    }
-
-    public List<Map<String, Object>> getLocations(String locationName) {
-        List<Map<String, Object>> res = new LinkedList<>();
-        if (!locations.containsKey(locationName)) {
-            return res;
-        }
-        for (long id : locations.get(locationName)) {
-            res.add(getNameNodeAsMap(id));
-        }
-        return res;
-    }
-
     static class Node {
         long id;
         double lon;
         double lat;
         // Map<String, String> extraInfo;
         Set<Long> adjs;
+        //Astar算法必需变量
         double priority = 0;
         double distTo = 0;
+        //储存该节点相关的路径，便于查找路径
         List<Long> wayIds;
 
         Node(long id, double lon, double lat) {
             this.id = id;
             this.lon = lon;
             this.lat = lat;
-            // this.extraInfo = new HashMap<>();
             this.adjs = new LinkedHashSet<>();
             this.wayIds = new ArrayList<>();
         }
