@@ -6,37 +6,38 @@ public class SeamCarver {
     private Picture picture;
     private int width;
     private int height;
-    // 表示在水平方向还是垂直方向寻找
     private boolean isVertical = true;
 
     public SeamCarver(Picture picture) {
         this.picture = new Picture(picture);
-        this.height = picture.height();
         this.width = picture.width();
+        this.height = picture.height();
     }
 
+    // current picture
     public Picture picture() {
         return new Picture(picture);
     }
 
+    // width of current picture
     public int width() {
         return width;
     }
 
+    // height of current picture
     public int height() {
         return height;
     }
 
+    // energy of pixel at column x and row y
     public double energy(int x, int y) {
         Color up, down, left, right;
-        // 垂直方向寻找
         if (isVertical) {
             up = y > 0 ? picture.get(x, y - 1) : picture.get(x, height - 1);
             down = y < height - 1 ? picture.get(x, y + 1) : picture.get(x, 0);
             left = x > 0 ? picture.get(x - 1, y) : picture.get(width - 1, y);
             right = x < width - 1 ? picture.get(x + 1, y) : picture.get(0, y);
-        } // 水平方向寻找
-        else {
+        } else {
             up = x > 0 ? picture.get(x - 1, y) : picture.get(height - 1, y);
             down = x < height - 1 ? picture.get(x + 1, y) : picture.get(0, y);
             left = y > 0 ? picture.get(x, y - 1) : picture.get(x, width - 1);
@@ -53,12 +54,23 @@ public class SeamCarver {
         return rx * rx + gx * gx + bx * bx + ry * ry + gy * gy + by * by;
     }
 
+    // sequence of indices for horizontal seam
+    public int[] findHorizontalSeam() {
+        isVertical = false;
+        swap();
+        int[] res = findVerticalSeam();
+        swap();
+        isVertical = true;
+        return res;
+    }
+
     private void swap() {
         int temp = width;
         width = height;
-        height = width;
+        height = temp;
     }
 
+    // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
         int[][] path = new int[width][height];
         double[][] cost = new double[width][height];
@@ -69,11 +81,12 @@ public class SeamCarver {
         }
 
         for (int j = 1; j < height; j++) {
-            for (int i = 1; i < width; i++) {
+            for (int i = 0; i < width; i++) {
                 double e = isVertical ? energy(i, j) : energy(j, i);
                 cost[i][j] = e + getMinCost(i, j, path, cost);
             }
         }
+
         int[] res = new int[height];
         double min = Double.MAX_VALUE;
         int minPos = 0;
@@ -113,15 +126,6 @@ public class SeamCarver {
             }
         }
         path[i][j - 1] = pos + i - 1;
-        return res;
-    }
-
-    public int[] findHorizontalSeam() {
-        isVertical = false;
-        swap();
-        int[] res = findVerticalSeam();
-        swap();
-        isVertical = true;
         return res;
     }
 
